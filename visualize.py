@@ -18,15 +18,16 @@ def visualize(df, index, fft=False, t=0.01):
 
         y = df.iloc[i][1:-1].astype('int8') # this removes the patient ID and the label
         if fft:
+            color = ['r', 'b', 'c', 'g', 'y']
             x = np.linspace(0.0, n*t, n)
             yf = scipy.fftpack.fft(y)
+
             xf = np.linspace(0.0, 1.0/(2.0*t), n/2)
-            plt.plot(xf, 2.0/n * np.abs(yf[:n//2]))
+            plt.plot(xf, 2.0/n * np.abs(yf[:n//2]), color[df.iloc[i][-1] - 1])
         else:
             plt.xlabel("time (in 1/178 s increments; total = 1s)")
             plt.plot(x, y)
-
-    plt.legend(["Row {}, y={}".format(i, df.iloc[i][-1]) for i in index])
+            plt.legend(["Row {}, y={}".format(i, df.iloc[i][-1]) for i in index])
     plt.show()
 
 if __name__=='__main__':
