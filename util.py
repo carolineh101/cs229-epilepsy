@@ -20,17 +20,22 @@ def parse_data(multiclass=True):
     Returns:
       - X: a (11500, 178) array where each row is an instance of activity for a person.
       - y: a (11500,) array where each entry is the label of the activity instance.
+      - ids: a (11500,) array where each entry is the ID of the person.
+      - chunks: a (11500,) array where each entry is the time chunk.
     """
-    # Parse ID information from the first column of the data using a regex.
+    # Parse ID/chunk information from the first column of the data using a regex.
     raw_ids = np.genfromtxt(DATA_PATH, delimiter=',', skip_header=True, usecols=[0], dtype=str)
-    match = np.vectorize(lambda x : re.match('\"X\d+\.(?P<id>.+)\"', x).group('id'))
-    ids = match(raw_ids)
+    pattern = '\"X(?P<chunk>\d+)\.(?P<id>.+)\"'
+    id_match = np.vectorize(lambda x : re.match(pattern, x).group('id'))
+    chunk_match = np.vectorize(lambda x: int(re.match(pattern, x).group('chunk')))
+    ids = id_match(raw_ids)
+    chunks = chunk_match(raw_ids)
     # Parse X, y data.
     data = np.genfromtxt(DATA_PATH, delimiter=',', skip_header=True, dtype=np.int16)[:, 1:]
     X = data[:, :data.shape[1] - 1]
     y = data[:, data.shape[1] - 1]
     if not multiclass: y = y == 1
-    return X, y, ids
+    return X, y, ids, chunks
 
 
 def parse_ids_one_row_per_person():
@@ -96,7 +101,8 @@ def parse_data_one_row_per_person(multiclass=True):
     return X, y
 
 
-def evaluate_model(X, y, ids, classes, clf, param_grid, k=10, seed=0, multiclass=True):
+def evaluate_model(
+    X, y, groups, classes, clf, param_grid, inner_k=10, outer_k=10, seed=0, multiclass=True):
     """
     This function evaluates a given model using nested cross-validation.
     URL: https://scikit-learn.org/stable/auto_examples/model_selection/plot_nested_cross_validation_iris.html
@@ -113,24 +119,33 @@ def evaluate_model(X, y, ids, classes, clf, param_grid, k=10, seed=0, multiclass
         scoring[scoring_fn] = make_scorer(make_f1_class_fn(c), classes=classes)
 
     # Run nested cross-validation.
-    shuffled_X, shuffled_y, shuffled_ids = shuffle(X, y, ids, random_state=seed)
-    inner_cv = GroupKFold(n_splits=k)
-    outer_cv = GroupKFold(n_splits=k)
+    shuffled_X, shuffled_y, shuffled_groups = shuffle(X, y, groups, random_state=seed)
+    inner_cv = GroupKFold(n_splits=inner_k)
+    outer_cv = GroupKFold(n_splits=outer_k)
     clf = GridSearchCV(estimator=clf, param_grid=param_grid, cv=inner_cv, iid=False)
-    clf.fit(shuffled_X, y=shuffled_y, groups=shuffled_ids)
+    clf.fit(shuffled_X, y=shuffled_y, groups=shuffled_groups)
 
     # Calculate scores.
     cv_scores = cross_validate(
-        clf, shuffled_X, y=shuffled_y, groups=shuffled_ids, cv=outer_cv, scoring=scoring,
-        fit_params={'groups': shuffled_ids})
+        clf, shuffled_X, y=shuffled_y, groups=shuffled_groups, cv=outer_cv, scoring=scoring,
+        fit_params={'groups': shuffled_groups})
     scores = {metric : np.mean(cv_scores['test_%s' % metric]) for metric in scoring}
+    fold_accuracy = cv_scores['test_accuracy']
 
     # Calculate confusion matrix.
     y_pred = cross_val_predict(
-        clf, shuffled_X, y=shuffled_y, groups=shuffled_ids, cv=outer_cv,
-        fit_params={'groups': shuffled_ids})
+        clf, shuffled_X, y=shuffled_y, groups=shuffled_groups, cv=outer_cv,
+        fit_params={'groups': shuffled_groups})
     cm = confusion_matrix(shuffled_y, y_pred)
-    return scores, cm
+    return scores, fold_accuracy, cm
+
+
+def plot_fold_accuracy(fold_accuracy, k=10):
+    plt.bar(range(1, k + 1), fold_accuracy)
+    plt.title('Per-Fold Accuracy')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Fold')
+    plt.show()
 
 
 def visualize_confusion_matrix(cm, classes):
