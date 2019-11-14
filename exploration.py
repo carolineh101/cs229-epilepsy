@@ -4,9 +4,12 @@ import matplotlib.pyplot as plt
 
 def visualizeByClass(df):
     agg = df.groupby('y').mean()
+    agg_errors = df.groupby('y').std()
     print(agg)
     df_plot = agg.T
+    error = agg_errors.T
     df_plot.plot(xticks=range(0, 173, 10)).legend(title='Class (y)', bbox_to_anchor=(1, 1))
+    error.plot(xticks=range(0, 173, 10)).legend(title='Class (y)', bbox_to_anchor=(1, 1))
     plt.show()
 
 if __name__=='__main__':
