@@ -10,6 +10,7 @@ def visualizeByClass(df):
     error = agg_errors.T
     df_plot.plot(xticks=range(0, 173, 10)).legend(title='Class (y)', bbox_to_anchor=(1, 1))
     error.plot(xticks=range(0, 173, 10)).legend(title='Class (y)', bbox_to_anchor=(1, 1))
+    plt.xlabel("")
     plt.show()
 
 if __name__=='__main__':
