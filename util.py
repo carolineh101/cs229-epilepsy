@@ -28,7 +28,7 @@ CNN_PARAM_GRID = {
     'epochs': [25],
     'batch_size': [5, 10, 50]
 }
-KNN_PARAM_GRID = {'n_neighbors': range(1, 10)}
+KNN_PARAM_GRID = {'n_neighbors': range(3, 10, 2)}
 SREG_PARAM_GRID = {'C': [0.1, 0.5, 1, 5]}
 PARAM_GRID_DICT = {'cnn': CNN_PARAM_GRID, 'knn': KNN_PARAM_GRID, 'sreg': SREG_PARAM_GRID}
 
