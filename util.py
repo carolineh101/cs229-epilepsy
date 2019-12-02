@@ -23,7 +23,7 @@ K = 10
 # Hyperparameter search grids.
 CNN_PARAM_GRID = {
     'filter': [64, 128],
-    'window': [3, 5, 7, 9]
+    'window': [3, 5, 7, 9],
     'pool': [3],
     'dropout': [0.1, 0.2, 0.5],
     'epochs': [25],
