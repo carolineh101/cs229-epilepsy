@@ -22,14 +22,14 @@ K = 10
 
 # Hyperparameter search grids.
 CNN_PARAM_GRID = {
-    'filter': [2 ** i for i in range(4, 8)],
-    'window': range(3, 10, 2),
-    'pool': [2, 3],
-    'dropout': [i / 10. for i in range(6)],
+    'filter': [64, 128],
+    'window': [3, 5, 7, 9]
+    'pool': [3],
+    'dropout': [0.1, 0.2, 0.5],
     'epochs': [25],
-    'batch_size': [2 ** i for i in range(3, 8)]
+    'batch_size': [5]
 }
-KNN_PARAM_GRID = {'n_neighbors': range(3, 10, 2)}
+KNN_PARAM_GRID = {'n_neighbors': [3, 5, 7, 9]}
 SREG_PARAM_GRID = {'C': [0.1, 0.5, 1, 5]}
 PARAM_GRID_DICT = {'cnn': CNN_PARAM_GRID, 'knn': KNN_PARAM_GRID, 'sreg': SREG_PARAM_GRID}
 
@@ -98,7 +98,7 @@ def get_estimator(model_type, seed, input_shape, num_classes):
     elif model_type == 'knn':
         return KNeighborsClassifier()
     elif model_type == 'cnn':
-        return KerasClassifier(build_fn=create_cnn_model, input_shape=input_shape, num_classes=num_classes, filter=64, window=3, pool=2, dropout=0.5)
+        return KerasClassifier(build_fn=create_cnn_model, input_shape=input_shape, num_classes=num_classes, filter=64, window=3, pool=3, dropout=0.5)
 
 
 def evaluate_model(X, y, groups, classes, model_type, scoring, k=K, seed=0, multiclass=True):
