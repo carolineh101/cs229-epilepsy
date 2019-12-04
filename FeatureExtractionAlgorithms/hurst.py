@@ -55,6 +55,6 @@ def hurst(X):
     R_S = numpy.log(R_S)[1:]
     n = numpy.log(T)[1:]
     A = numpy.column_stack((n, numpy.ones(n.size)))
-    [m, c] = numpy.linalg.lstsq(A, R_S)[0]
+    [m, c] = numpy.linalg.lstsq(A, R_S, rcond=None)[0]
     H = m
     return H

@@ -1,7 +1,7 @@
 import numpy
 
 
-def hfd(X, Kmax):
+def hfd(X, Kmax=5):
     """ Compute Higuchi Fractal Dimension of a time series X. kmax
      is an HFD parameter
     """
@@ -19,7 +19,7 @@ def hfd(X, Kmax):
         L.append(numpy.log(numpy.mean(Lk)))
         x.append([numpy.log(float(1) / k), 1])
 
-    (p, _, _, _) = numpy.linalg.lstsq(x, L)
+    (p, _, _, _) = numpy.linalg.lstsq(x, L, rcond=None)
     return p[0]
 
 
