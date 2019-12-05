@@ -128,7 +128,7 @@ def dfa(X, Ave=None, L=None):
 
     Alpha = numpy.linalg.lstsq(numpy.vstack(
         [numpy.log(L), numpy.ones(len(L))]
-    ).T, numpy.log(F))[0][0]
+    ).T, numpy.log(F), rcond=None)[0][0]
 
     return Alpha
 
