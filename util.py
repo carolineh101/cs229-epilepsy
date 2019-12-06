@@ -10,6 +10,7 @@ from keras.layers.convolutional import Conv1D
 from keras.layers.convolutional import MaxPooling1D
 from keras.models import Sequential
 from keras.wrappers.scikit_learn import KerasClassifier
+from sklearn.externals.joblib import dump, load
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix, f1_score, make_scorer
 from sklearn.model_selection import GridSearchCV, GroupKFold, GroupShuffleSplit, cross_val_predict, cross_validate
@@ -22,10 +23,9 @@ K = 10
 
 # Hyperparameter search grids.
 CNN_PARAM_GRID = {
-    'window': [3, 5, 7],
+    'window': [3, 11, 15, 19],
     'dropout': [0.1, 0.2, 0.5],
-    'epochs': [25],
-    'batch_size': [5]
+    'epochs': [25]
 }
 KNN_PARAM_GRID = {'n_neighbors': [3, 5, 7, 9]}
 SREG_PARAM_GRID = {'C': [0.1, 0.5, 1, 5]}
@@ -134,17 +134,23 @@ def evaluate_model(X, y, groups, classes, model_type, scoring, k=K, seed=0, mult
     return train_scores, test_scores, fold_accuracy, cm
 
 
-def evaluate_cnn(X_train, y_train, groups_train, X_test, y_test, classes, scoring, k=K, seed=0, multiclass=True):
+def evaluate_cnn(X_train, y_train, groups_train, X_test, y_test, classes, scoring, feature_set, k=K, seed=0, multiclass=True):
     """
     This function identifies the best parameters for a CNN using non-nested cross-validation
     (based on accuracy) and re-trains the best model on the full train set.
     """
-    estimator = get_estimator('cnn', seed, (X_train.shape[1], 1), len(classes))
-    # Run CV.
-    cv = GroupKFold(n_splits=k)
-    clf = GridSearchCV(
-        estimator, CNN_PARAM_GRID, cv=cv, iid=False, scoring=scoring, refit='accuracy', return_train_score=True)
-    clf.fit(X_train, y=y_train, groups=groups_train)
+    filename = '{}.joblib'.format(feature_set)
+    clf = None
+    if os.path.isfile(filename):
+        clf = load(filename)
+    else:
+        estimator = get_estimator('cnn', seed, (X_train.shape[1], 1), len(classes))
+        # Run CV.
+        cv = GroupKFold(n_splits=k)
+        clf = GridSearchCV(
+            estimator, CNN_PARAM_GRID, cv=cv, iid=False, scoring=scoring, refit='accuracy', return_train_score=True)
+        clf.fit(X_train, y=y_train, groups=groups_train)
+        dump(clf.best_estimator_, filename)
     # Evaluate model.
     acc = clf.score(X_test, y=y_test)
     y_pred = clf.predict(X_test)
