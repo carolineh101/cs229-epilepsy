@@ -21,15 +21,23 @@ from sklearn.utils import shuffle
 DATA_PATH = 'data.csv'
 K = 10
 
-# Hyperparameter search grids.
-CNN_PARAM_GRID = {
+# Baseline hyperparameter search grids.
+KNN_PARAM_GRID = {'n_neighbors': [3, 5, 7, 9]}
+SREG_PARAM_GRID = {'C': [0.1, 0.5, 1, 5]}
+PARAM_GRID_DICT = {'knn': KNN_PARAM_GRID, 'sreg': SREG_PARAM_GRID}
+
+# CNN hyperparameter search grids.
+F_CNN_PARAM_GRID = {
+    'window': [3, 7, 11],
+    'dropout': [0.1, 0.2, 0.5],
+    'epochs': [25]
+}
+R_CNN_PARAM_GRID = {
     'window': [3, 11, 15, 19],
     'dropout': [0.1, 0.2, 0.5],
     'epochs': [25]
 }
-KNN_PARAM_GRID = {'n_neighbors': [3, 5, 7, 9]}
-SREG_PARAM_GRID = {'C': [0.1, 0.5, 1, 5]}
-PARAM_GRID_DICT = {'knn': KNN_PARAM_GRID, 'sreg': SREG_PARAM_GRID}
+CNN_PARAM_GRID_DICT = {'fourier': F_CNN_PARAM_GRID, 'raw': R_CNN_PARAM_GRID}
 
 
 def parse_data(multiclass=True, normalize=True):
@@ -148,7 +156,8 @@ def evaluate_cnn(X_train, y_train, groups_train, X_test, y_test, classes, scorin
         # Run CV.
         cv = GroupKFold(n_splits=k)
         clf = GridSearchCV(
-            estimator, CNN_PARAM_GRID, cv=cv, iid=False, scoring=scoring, refit='accuracy', return_train_score=True)
+            estimator, CNN_PARAM_GRID_DICT[feature_set],
+            cv=cv, iid=False, scoring=scoring, refit='accuracy', return_train_score=True)
         clf.fit(X_train, y=y_train, groups=groups_train)
         dump(clf.best_estimator_, filename)
     # Evaluate model.
